@@ -28,24 +28,24 @@ Individuals of _Uca rapax_ were genotyped across tens of thousands of loci using
 
 #### _Bioinformatic Analysis_
 * Initial Raw Data Assessment and Characterization
-  * Count the RAW reads
-  * Examine quality of data (fastqc)
+   * Count the RAW reads
+   * Examine quality of data (fastqc)
 * Bioinformatic Processing - completed using dDocent 
-  * Trimming adapters and low quality reads (fastp)
-  * De Novo Reference Assembly (rainbow)
-  * Read Mapping (FreeBayes)
-  * SNP calling and filtering (VCFtools)
+   * Trimming adapters and low quality reads (fastp)
+   * De Novo Reference Assembly (rainbow)
+   * Read Mapping (FreeBayes)
+   * SNP calling and filtering (VCFtools)
 * Population-level Analyses
-  * Outlier Detection Programs
+   * Outlier Detection Programs
    * Bayscan
    * Bayenv2
    * PCAadapt
    * Outflank
 * Additional Anaylses
-      * Spatial Principal Components Analysis (sPCA)
-      * Pairwise Fst
-      * Genetic diversity (observed and expected heterozygosity)
-      * EEMS (https://www.nature.com/articles/ng.3464)
+   * Spatial Principal Components Analysis (sPCA)
+   * Pairwise Fst
+   * Genetic diversity (observed and expected heterozygosity)
+   * EEMS (https://www.nature.com/articles/ng.3464)
       
 *Using the results from these 4 analyses, the data set will be divided in two categories: putatively neutral SNPs and SNPs putatively under selection.
 
