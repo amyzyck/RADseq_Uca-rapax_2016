@@ -41,13 +41,13 @@ Individuals of _Uca rapax_ were genotyped across tens of thousands of loci using
    * Bayenv2
    * PCAadapt
    * Outflank
-
-*Using the results from these 4 analyses, the data set will be divided in two categories: putatively neutral SNPs and SNPs putatively under selection.
-
-  * Additional Anaylses
+* Additional Anaylses
       * Spatial Principal Components Analysis (sPCA)
       * Pairwise Fst
       * Genetic diversity (observed and expected heterozygosity)
+      * EEMS (https://www.nature.com/articles/ng.3464)
+      
+*Using the results from these 4 analyses, the data set will be divided in two categories: putatively neutral SNPs and SNPs putatively under selection.
 
 #### _References_
 
