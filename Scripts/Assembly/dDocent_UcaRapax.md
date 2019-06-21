@@ -17,7 +17,7 @@ for fq in *.fq.gz
 > done
 ```
 
-#### Output
+#### [Output](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Scripts/Assembly/RawReads_Counts)
 ****
 ## dDocent will be used for Quality Filtering, _De Novo_ Assembly, Read Mapping, and SNP Calling
 
