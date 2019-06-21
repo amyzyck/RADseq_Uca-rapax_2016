@@ -1,0 +1,629 @@
+---
+title: "NeutralSNP"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Population analyses on Neutral dataset  
+
+
+```{r}
+#Loading all the necessary packages
+library(adegenet)
+library(vcfR)
+library("radiator") # Conversion from vcf to a lot of other formats
+library("dplyr")
+library("hierfstat")
+library("ggplot2") #For plotting
+library("reshape2") #For plotting
+library("plyr")
+library("cowplot") #For plotting manuscript figs
+library(PCAviz)  #Visualizing output of PCA
+```
+
+
+## Making files
+
+
+#### Make genind object
+```{r}
+my_vcf <- read.vcfR("neutralsnploci.recode.vcf")
+
+strata<- read.table("strata", header=TRUE)
+```
+
+```{r}
+rad.filt <- vcfR2genind(my_vcf, strata = strata, pop = c(rep("FBN", 30),rep("FBS", 25),rep("OBN", 19), rep("OBS",28), rep("PCN",27), rep("PCS",25), rep("SPN",28), rep("SPS",29), rep("WC1",25), rep("WC2",27), rep("WC3",28), rep("WC4",29)))
+```
+
+```{r}
+rad.filt
+```
+
+
+```{r}
+#Providing population names for plotting
+pop_order <- c("FBN","FBS","OBN","OBS","PCN","PCS","SPN","SPS","WC1","WC2","WC3","WC4")
+```
+
+```{r}
+#Read in the other info from .strata file and extract information such as locality, latitude, and longitude.
+info <- as.data.frame(read.table("strata",header = T,sep = "\t",stringsAsFactors = F))
+
+mystrats <- as.data.frame(matrix(,nrow = length(indNames(rad.filt)),ncol=5))
+colnames(mystrats) <- c("Population","Locality","Latitude","Longitude","Distance")
+
+just.strats <- select(info,c("Population","Locality"))
+stratted.filt <- strata(rad.filt, formula= Locality/Population, combine = TRUE,just.strats)
+stratted.filt@other <- select(info, Latitude,Longitude,Distance)
+```
+
+```{r}
+stratted.filt
+```
+
+### Repeat for 1 random SNP per contig
+```{r}
+my_vcf_u <- read.vcfR("neutralsnploci.filtered1SNPper.vcf")
+
+strata<- read.table("strata", header=TRUE)
+```
+
+```{r}
+rad.u <- vcfR2genind(my_vcf_u, strata = strata, pop = c(rep("FBN", 30),rep("FBS", 25),rep("OBN", 19), rep("OBS",28), rep("PCN",27), rep("PCS",25), rep("SPN",28), rep("SPS",29), rep("WC1",25), rep("WC2",27), rep("WC3",28), rep("WC4",29)))
+```
+
+```{r}
+rad.u
+```
+
+```{r}
+stratted.u <- strata(rad.u, formula= Locality/Population, combine = TRUE,just.strats)
+stratted.u@other <- select(info, Latitude,Longitude, Distance)
+```
+
+```{r}
+stratted.u
+```
+
+
+### Make hierfstat object
+
+```{r}
+hf.filt <- genind2hierfstat(rad.filt, pop = c(rep("FBN", 30),rep("FBS", 25),rep("OBN", 19), rep("OBS",28), rep("PCN",27), rep("PCS",25), rep("SPN",28), rep("SPS",29), rep("WC1",25), rep("WC2",27), rep("WC3",28), rep("WC4",29))) 
+```
+
+```{r}
+hf.u <- genind2hierfstat(rad.u, pop = c(rep("FBN", 30),rep("FBS", 25),rep("OBN", 19), rep("OBS",28), rep("PCN",27), rep("PCS",25), rep("SPN",28), rep("SPS",29), rep("WC1",25), rep("WC2",27), rep("WC3",28), rep("WC4",29)))
+hf.u <- hf.u$hierfstat.no.imputation
+```
+
+
+### Make input for EEMS
+
+```{r}
+# V1 methtod to get diffs matrix, preferred
+bed2diffs_v1 <- function(Geno) {
+  nIndiv <- nrow(Geno)
+  nSites <- ncol(Geno)
+  Diffs <- matrix(0, nIndiv, nIndiv)
+  
+  for (i in seq(nIndiv - 1)) {
+    for (j in seq(i + 1, nIndiv)) {
+      x <- Geno[i, ]
+      y <- Geno[j, ]
+      Diffs[i, j] <- mean((x - y)^2, na.rm = TRUE)
+      Diffs[j, i] <- Diffs[i, j]
+    }
+  }
+  Diffs
+}
+```
+
+```{r}
+# V2 method to get .diffs matrix, only if V1 doesn't work
+bed2diffs_v2 <- function(Geno) {
+  nIndiv <- nrow(Geno)
+  nSites <- ncol(Geno)
+  Miss <- is.na(Geno)
+  ## Impute NAs with the column means (= twice the allele frequencies)
+  Mean <- matrix(colMeans(Geno, na.rm = TRUE), ## a row of means
+                 nrow = nIndiv, ncol = nSites, byrow = TRUE) ## a matrix with nIndiv identical rows of means
+  Mean[Miss == 0] <- 0 ## Set the means that correspond to observed genotypes to 0
+  Geno[Miss == 1] <- 0 ## Set the missing genotypes to 0 (used to be NA) 
+  Geno <- Geno + Mean
+  ## Compute similarities
+  Sim <- Geno %*% t(Geno) / nSites
+  SelfSim <- diag(Sim) ## self-similarities
+  vector1s <- rep(1, nIndiv) ## vector of 1s
+  ## This chunk generates a `diffs` matrix
+  Diffs <- SelfSim %*% t(vector1s) + vector1s %*% t(SelfSim) - 2 * Sim
+  Diffs
+}
+```
+
+```{r}
+geno <- stratted.filt@tab
+```
+
+```{r}
+# Get rid of non-biallelic loci
+multi.loci <- names(which(stratted.filt@loc.n.all != 2))
+multi.cols <- which(grepl(paste0("^", multi.loci, "\\.\\d+$", collapse = "|"), colnames(geno)))
+if (length(multi.cols)) geno <- geno[, - multi.cols]
+nloci <- dim(geno)[2] / 2
+
+dim(geno)
+```
+
+```{r}
+stopifnot(identical(stratted.filt@type, 'codom'))
+```
+
+
+```{r}
+# bed2diffs functions  
+diffs.v1 <- bed2diffs_v1(geno)
+diffs.v2 <- bed2diffs_v2(geno)
+# Round to 6 digits
+diffs.v1 <- round(diffs.v1, digits = 6)
+diffs.v2 <- round(diffs.v2, digits = 6)
+```
+
+### Check that the dissimilarity matrix has one positive eigenvalue and nIndiv-1 negative eigenvalues, as required by a full-rank Euclidean distance matrix. If the V1 method does not make a Euclidean matrix, you must use V2
+
+```{r}
+tail(sort(round(eigen(diffs.v1)$values, digits = 2)))
+```
+
+```{r}
+tail(sort(round(eigen(diffs.v2)$values, digits = 2)))
+```
+
+```{r}
+# Set suffix for EEMS input files
+suf <- "neutraldata-filt"
+```
+
+```{r}
+write.table(diffs.v1, paste(suf,".v1.diffs",sep=""), 
+            col.names = FALSE, row.names = FALSE, quote = FALSE)
+```
+
+```{r}
+## Get gps coordinates from previously created info matrix
+xOR.info <- dplyr::filter(info)
+gps_matrix <- select(xOR.info,c("Longitude","Latitude"))
+```
+
+```{r}
+#write .coord file
+write.table(gps_matrix, paste(suf,".v1.coord",sep=""),col.names = FALSE, row.names = FALSE,quote = FALSE)
+```
+
+
+## EEMS 
+
+### Install rEEMSplots
+```{r}
+library(rEEMSplots)
+```
+
+## Plotting EEMS after running runeems_snps
+
+```{r}
+dirs = c("/home/azyck/Fiddler_Crab/ddocent_env/NeutralSNP/neutraldata-filt-D200-chain1", "/home/azyck/Fiddler_Crab/ddocent_env/NeutralSNP/neutraldata-filt-D300-chain1")
+```
+
+```{r}
+eems.plots(mcmcpath = dirs, plotpath = "/home/azyck/Fiddler_Crab/ddocent_env/NeutralSNP/neutraldata-filt-maf05-All-plots",
+           longlat = T,add.grid=F,add.outline = T,add.demes = T,
+           projection.in = "+proj=longlat +datum=WGS84",projection.out = "+proj=merc +datum=WGS84",
+           add.map = T,add.abline = T, add.r.squared = T)
+```
+
+
+## Pairwise Fst
+
+```{r}
+fst.mat <- pairwise.WCfst(hf.filt)
+```
+
+
+```{r}
+gindF.fst.mat.triN <- as.matrix(fst.mat)
+colnames(gindF.fst.mat.triN) <- pop_order
+rownames(gindF.fst.mat.triN) <- pop_order
+```
+
+```{r}
+meltedN <- melt(gindF.fst.mat.triN, na.rm =TRUE)
+round(gindF.fst.mat.triN,4)
+```
+
+```{r}
+summary(meltedN$value)
+```
+
+
+```{r}
+#Plotting Pairwise fst
+neutral <- ggplot(data = meltedN, aes(Var2, Var1, fill = value))+ geom_tile(color = "white")+ 
+  scale_fill_gradient(low = "white", high = "darkorange2", name="FST")  +
+  ggtitle(expression(atop("Pairwise FST, WC (1984) Neutral", atop(italic("N = 320, L = 8,117"), ""))))+
+  labs( x = "Sampling Site", y = "Sampling Site") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1),axis.text.y = element_text(size = 13)) + 
+  theme(axis.title = element_text(size = 16),legend.text = element_text(size =15), legend.title = element_text(size =16)) +
+  theme(plot.title = element_text(size = 17)) +
+coord_fixed()
+neutral
+```
+
+### Re-running Pairwise Fst using regions instead of populations
+
+```{r}
+# make a copy of the hierfstat object
+hf.reg <- hf.filt
+# relabel individuals by their phylogeographic region
+regions <- c("FB","FB","OB","OB","PC","PC","SP","SP",rep("WC",4))
+hf.reg$pop <- mapvalues(hf.reg$pop, from = c("FBN","FBS","OBN","OBS","PCN","PCS","SPN","SPS","WC1","WC2","WC3","WC4"), to = regions)
+```
+
+```{r}
+fst.mat.reg.N <- pairwise.WCfst(hf.reg)
+```
+
+```{r}
+fst.mat.reg.N
+```
+
+```{r}
+NS <- c("FB","OB","PC","SP","WC")
+gindF.fst.mat.triR <- as.matrix(fst.mat.reg.N)
+gindF.fst.mat.triR <- gindF.fst.mat.triR[NS,NS]
+```
+
+```{r}
+gindF.fst.mat.triR
+```
+
+```{r}
+write.table(gindF.fst.mat.triR, file="neutralloci-Reg.pwfst",row.names = T,col.names = T)
+
+meltedN_reg <- melt(gindF.fst.mat.triR, na.rm =TRUE)
+```
+
+```{r}
+#Plotting Pairwise fst
+neut_reg <- ggplot(data = meltedN_reg, aes(Var2, Var1, fill = value))+ geom_tile(color = "white")+ 
+  scale_fill_gradient(low = "white", high = "red", name="FST")  +
+  ggtitle(expression(atop("Pairwise FST, WC (1984), Regions", atop(italic("N = 320, L = 6663"), ""))))+
+  labs( x = "Region", y = "Region") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1),axis.text.y = element_text(size = 13)) + 
+  coord_fixed()
+neut_reg
+```
+
+
+## Genetic diversity (observed and expected heterozygosity)
+
+```{r}
+comb <- summary(stratted.filt)
+names(comb)
+```
+
+```{r}
+plot(comb$Hobs, xlab="Loci number", ylab="Observed Heterozygosity", 
+     main="Observed heterozygosity per locus")
+```
+
+
+```{r}
+plot(comb$Hobs,comb$Hexp, xlab="Hobs", ylab="Hexp", 
+     main="Expected heterozygosity as a function of observed heterozygosity per locus")
+```
+
+
+```{r}
+bartlett.test(list(comb$Hexp, comb$Hobs)) # a test : H0: Hexp = Hobs
+```
+
+
+#### Significant difference between Observed and expected heterzygosity 
+
+
+```{r}
+basicstat <- basic.stats(hf.filt, diploid = TRUE, digits = 3)
+```
+
+```{r}
+as.data.frame(basicstat$overall)
+```
+
+```{r}
+# get bootstrap confidence values for Fis
+boot <- boot.ppfis(hf.filt,nboot = 1000)
+boot5 <- boot.ppfis(hf.filt,nboot = 1000,quant = 0.5)
+```
+
+```{r}
+# add latitude for each population
+latitude = c(27.674833, 27.667618, 27.708808, 27.696972, 27.632041, 27.614554, 27.564633, 27.473143, 27.589457, 27.59879, 27.605984, 27.614192)
+```
+
+```{r}
+# add longitude for each population
+longitude = c(-97.268409, -97.272238, -97.336006, -97.331832, -97.213456, -97.213456, -97.257698, -97.311179, -97.261131, -97.256947, -97.252883, -97.248581)
+```
+
+```{r}
+# add distance for each population
+distance = c(0.617, 0.27, 0.22, 1.555, 6.16, 7.77, 4.077, 15.358, 1.547, 0.516, 0.56, 1.516)
+```
+
+```{r}
+# combine all pop statistics
+colnames(basicstat$Ho) <- pop_order
+Ho <- colMeans(basicstat$Ho,na.rm = T)
+He <- colMeans(basicstat$Hs,na.rm = T)
+Fis<- boot5$fis.ci$ll
+y <- cbind(Ho,He,Fis,boot$fis.ci,latitude,longitude,distance)
+y
+```
+
+```{r}
+summary(Fis)
+```
+
+```{r}
+summary(He)
+```
+
+```{r}
+# Plot He vs Latitude
+R2 = round(summary(lm(y$He ~ y$latitude))$r.squared, 4)             
+
+ggplot(y, aes(x = latitude, y = He)) + geom_point() + 
+geom_smooth(method=lm) + 
+ggtitle("Expected heterozygosity vs Latitude, Neutral") +
+annotate(geom = "text", label=paste("italic(R^2)==",R2), x=27.7, y=0.2635, parse=T) +
+scale_x_reverse()
+```
+
+```{r}
+# Plot He vs Longitude
+R3 = round(summary(lm(y$He ~ y$longitude))$r.squared, 4)             
+
+ggplot(y, aes(x = longitude, y = He)) + geom_point() + 
+geom_smooth(method=lm) + 
+ggtitle("Expected heterozygosity vs Longitude, Neutral") +
+annotate(geom = "text", label=paste("italic(R^2)==",R3), x=-97.22, y=0.2635, parse=T) +
+scale_x_reverse()
+```
+
+```{r}
+# Plot He vs Distance
+R4 = round(summary(lm(y$He ~ y$distance))$r.squared, 4)             
+
+ggplot(y, aes(x = distance, y = He)) + geom_point() + 
+geom_smooth(method=lm) + 
+ggtitle("Expected heterozygosity vs Distance, Neutral") +
+annotate(geom = "text", label=paste("italic(R^2)==",R4), x=0, y=0.2635, parse=T) +
+scale_x_reverse()
+```
+```{r}
+R4
+```
+
+
+### PCA 
+
+```{r}
+X <- tab(stratted.u, freq = TRUE, NA.method = "mean")
+pca1 <- dudi.pca(X, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pca1$eig[1:50], main = "PCA eigenvalues", col = heat.colors(50))
+s.class(pca1$li, pop(stratted.filt))
+title("PCA of simulated dataset\naxes 1-2")
+add.scatter.eig(pca1$eig[1:20], 3,1,2)
+
+col <- funky(15) 
+s.class(pca1$li, pop(stratted.filt),xax=1,yax=2, col=col, axesell=FALSE, cstar=0, cpoint=3, grid=FALSE)
+```
+
+
+### DAPC
+
+```{r}
+grp <- (stratted.filt@pop)
+table(pop(stratted.filt), grp)
+
+table.value(table(pop(stratted.filt), grp), col.lab=paste("inf", 1:2), row.lab=paste("ori", 1:4))
+```
+
+```{r}
+dapc1 <- dapc(stratted.filt, grp)
+```
+
+```{r}
+#Plot DAPC plot 
+col12 <- c("darkorange2","orange1","chocolate1","darkorange","green3","green4","gold","yellow","skyblue","skyblue3","slateblue1","steelblue4")
+
+scatter(dapc1, scree.da=FALSE, col = col12, bg="white", pch=20, cell=0, cstar=0, solid=.7,
+cex=3,clab=0, leg=TRUE, txt.leg= pop_order, xlab = "PC1: 17.91% Variance Explained", ylab = "PC2: 14.75% Variance Explained")
+```
+
+#### Calculating contribution of PCs 1 and 2
+
+```{r}
+sum(dapc1$eig)
+```
+
+```{r}
+dapc1$eig[1]
+```
+
+```{r}
+dapc1$eig[2]
+```
+
+```{r}
+contrib <- loadingplot(dapc1$var.contr, axis=1, thres=.01, lab.jitter=1)
+contrib
+
+```
+
+```{r}
+setPop(stratted.filt) <- ~Population
+
+dapc1 <- dapc(stratted.filt, pop(stratted.filt))
+contrib <- loadingplot(dapc1$var.contr, axis=1, thres=.05, lab.jitter=1)
+contrib
+```
+
+```{r}
+#Structure like
+compoplot(dapc1, posi="bottomright",txt.leg=paste("Cluster", 1:12), lab="", ncol=1, xlab="individuals")
+
+temp <- which(apply(dapc1$posterior,1, function(e) all(e<0.9)))
+
+compoplot(dapc1, subset=temp, posi="bottomright", txt.leg=paste("Cluster", 1:12), ncol=2)
+```
+
+
+### PCAviz
+
+```{r}
+NA.afDraw<- function(ind){
+  ind.mat <- ind@tab
+  new.mat <- ind.mat
+  af = colSums(ind.mat[,seq(1,ncol(ind.mat)-1,2)],na.rm = TRUE)/
+      (2*apply(ind.mat[,seq(1,ncol(ind.mat)-1,2)],2,function(x) sum(!is.na(x))))
+  af.Draw <- function(geno, af){
+     new <- function(geno,af){
+        if(is.na(geno)){
+        newA = rbinom(1,2,af)
+        }
+        else {newA <- geno}
+        return(newA)
+   }
+  new.row <- mapply(geno,af,FUN = new)
+  return(new.row)}
+  
+  new.mat[,seq(1,ncol(ind.mat)-1,2)] <- t(apply(ind.mat[,seq(1,ncol(ind.mat)-1,2)],1,af.Draw,af))
+  new.mat[,seq(2,ncol(ind.mat),2)] <- 2-new.mat[,seq(1,ncol(ind.mat)-1,2)]
+  new.ind <- ind
+  new.ind@tab <- new.mat
+  return(new.ind)
+}
+```
+
+```{r}
+u.na <- NA.afDraw(stratted.u)
+```
+
+```{r}
+pca <- dudi.pca(u.na,cent=TRUE,scale=TRUE,scannf = T)
+```
+
+```{r}
+pca <- dudi.pca(u.na,cent=TRUE,scale=TRUE,scannf = F, nf = 30)
+```
+
+```{r}
+col18 <- funky(length(unique(u.na@strata$Population)))
+#Colors that match the neutral Structure results
+col6 <-  c("firebrick","dodgerblue","midnightblue","salmon","forestgreen","chocolate1")
+
+par(mfrow=c(2,2))
+s.class(pca$li, strata(u.na)$Locality,xax=1,yax=2, 
+        sub = "neutralloci,PC 1-2, 320 individuals, 6,663 SNPs, maf 5.0%",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$Locality,xax=1,yax=3, 
+        sub = "neutralloci,PC 1-2, 320 individuals, 6,663 SNPs, maf 5.0%",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$Locality,xax=1,yax=4, 
+        sub = "neutralloci,PC 1-2, 320 individuals, 6,663 SNPs, maf 5.0%",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$Locality,xax=1,yax=5, 
+        sub = "neutralloci,PC 1-2, 320 individuals, 6,663 SNPs, maf 5.0%",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+```
+
+```{r}
+s.label(pca$li, xax=1,yax=5, 
+        sub = "neutralloci,PC 1-2, 320 individuals, 6,663 SNPs, maf 5.0%",
+        possub = "topleft")
+```
+
+
+```{r}
+eig.perc <- 100*pca$eig/sum(pca$eig)
+head(eig.perc)
+```
+
+```{r}
+li <-pca$li
+c1 <- pca$c1
+#Create dataframe of info like latitude and population for each individual
+info_mat <- as.data.frame(cbind(u.na@strata, u.na@other$Latitude, u.na@other$Longitude, u.na@other$Distance))
+colnames(info_mat) <- c("Population","Locality","Latitude", "Longitude", "Distance")
+colnames(c1) <- colnames(li)
+#create pcaviz object
+pviz <- pcaviz(x=li,rotation=c1,dat=info_mat)
+```
+
+
+```{r}
+#Comparing to Distance
+p = list(size=2) 
+plot(pviz,color = "Distance", draw.points = T, group.summary.labels = F, draw.pc.axes = T, geom.point.params = p)
+```
+
+```{r}
+p = list(size=6)
+plot(pviz, coords = c("Axis1","Distance"),
+     show.legend = T,color = "Population",colors = col18,
+     draw.points =T,group.summary.labels = F,geom.point.params= list(size = 6, alpha = 0.9),geom.point.summary.params = list(size =6,alpha = 0.4))
+```
+
+```{r}
+#Comparing to Latitude 
+p = list(size=2) 
+plot(pviz,color = "Latitude", draw.points = T, group.summary.labels = F, draw.pc.axes = T, geom.point.params = p)
+```
+
+```{r}
+p = list(size=6)
+plot(pviz, coords = c("Axis1","Latitude"),
+     show.legend = T,color = "Population",colors = col18,
+     draw.points =T,group.summary.labels = F,geom.point.params= list(size = 6, alpha = 0.9),geom.point.summary.params = list(size =6,alpha = 0.4))
+```
+
+```{r}
+plot(pviz,coords = c("Axis1","Axis2","Axis3","Axis4","Axis5","Distance"),group = NULL,color= "Population",colors = col18,draw.points = T,scale.pc.axes = 0.6, show.legend=F)
+```
+
+```{r}
+p = list(size=6)
+A2 <- plot(pviz,coords = c("Axis2","Distance"),group="Population",
+     show.legend = F,color = "Locality",colors = col6,draw.points =T,
+     group.summary.labels = F,draw.linear.fit = F, coord_fixed=T)
+A3 <- plot(pviz,coords = c("Axis3","Distance"),group="Population",
+     show.legend = F,color = "Locality",colors = col6,
+     draw.points =T,group.summary.labels = F,draw.linear.fit = F)
+A4 <- plot(pviz,coords = c("Axis4","Distance"),group="Population",
+     show.legend = F,color = "Locality",colors = col6,
+     draw.points =T,group.summary.labels = F,draw.linear.fit = F)
+A5 <- plot(pviz,coords = c("Axis5","Distance"),group="Population",
+     show.legend = T,color = "Locality",colors = col6,
+     draw.points =T,group.summary.labels = F,draw.linear.fit = F)
+plot_grid(A2,A3,A4,A5, labels = c('A','B','C','D'))
+```
