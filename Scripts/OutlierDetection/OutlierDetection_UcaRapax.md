@@ -39,13 +39,13 @@ x <- pcadapt(input = filename, K = 20)
 #Plot the likelihoods
 plot(x, option = "screeplot")
 ```
-![K20](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/Output/Outlier_Detection/ScreePlotK20.png)
+![K20](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/ScreePlotK20.png)
 
 2 or 3 seem to be a good cut off. Now zoomed in:
 ```javascript
 plot(x, option = "screeplot", K = 10)
 ```
-![K10](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/ScreePlotK10.png)
+![K10](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/ScreePlotK10.png)
 
 I'm going to pick 3.
 ```javascript
@@ -92,7 +92,7 @@ poplist.names <- c(rep("FBN", 30),rep("FBS", 25),rep("OBN", 19), rep("OBS",28), 
 plot(x, option = "scores", pop = poplist.names)
 ```
 
-![PCA](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/Output/Outlier_Detection/PCA1%262.png)
+![PCA](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/PCA1%262.png)
 
 Very little spatial structure :(
 
@@ -103,7 +103,7 @@ Very little spatial structure :(
 #Make Manhattan Plot
 plot(x , option = "manhattan")
 ```
-![Manhattan](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/ManhattanPlot.png)
+![Manhattan](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/ManhattanPlot.png)
 
 #### Q-Q Plot
 ```javascript
@@ -111,7 +111,7 @@ plot(x , option = "manhattan")
 plot(x, option = "qqplot", threshold = 0.05)
 ```
 
-![QQPlot](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/QQplot.png)
+![QQPlot](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/QQplot.png)
 
 #### Look at P-value distribution
 ```javascript
@@ -119,7 +119,7 @@ plot(x, option = "qqplot", threshold = 0.05)
 plot(x, option = "stat.distribution")
 ```
 
-![pvalue](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/pvalue.png)
+![pvalue](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/pvalue.png)
 
 ```javascript
 library(qvalue)
@@ -268,14 +268,14 @@ my_fst <- MakeDiploidFSTMat(t(G), locusNames = paste0(chromosome,"_", position),
 plot(my_fst$He, my_fst$FST)
 ```
 
-![FST](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/FST1.png)
+![FST](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/FST1.png)
 
 ```javascript
 plot(my_fst$FST, my_fst$FSTNoCorr)
 abline(0,1)
 ```
 
-![NoCorr](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/NoCorr.png)
+![NoCorr](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/NoCorr.png)
 
 We need to give OUTFlank a set of quasi-independent SNPs to estimate the neutral FST distribution. To approximate this, we will prune our SNPs to one per RAD contig
 
@@ -349,7 +349,7 @@ my_fst_sub <- MakeDiploidFSTMat(t(G_sub), locusNames = paste0(chromosome_sub,"_"
 plot(my_fst_sub$He, my_fst_sub$FST)
 ```
 
-![FST2](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/FST2.png)
+![FST2](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/FST2.png)
 
 ```javascript
 out_trim <- OutFLANK(my_fst_sub, NumberOfSamples = 12, qthreshold=0.05, RightTrimFraction=0.05, LeftTrimFraction=0.05,Hmin =0.05)
@@ -360,13 +360,13 @@ OutFLANKResultsPlotter(out_trim, withOutliers = TRUE,
                          FALSE, RightZoomFraction = 0.05, titletext = NULL)
 ```
 
-![NoCorr](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/Nosamplesizecorr.png)
+![NoCorr](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/Nosamplesizecorr.png)
 
 ```javascript
 hist(out_trim$results$pvaluesRightTail)
 ```
 
-![Histo](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/Histo.png)
+![Histo](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/Histo.png)
 
 ```javascript
 P1 <- pOutlierFinderChiSqNoCorr(my_fst, Fstbar = out_trim$FSTNoCorrbar,
@@ -379,7 +379,7 @@ plot(P1$He, P1$FST, pch=19, col=rgb(0,0,0,0.1))
 points(P1$He[my_out], P1$FST[my_out], col="blue")
 ```
 
-![Outlier](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/Outlierpoint.png)
+![Outlier](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/Outlierpoint.png)
 
 ```javascript
 P1[which(P1$OutlierFlag == TRUE),]
@@ -415,7 +415,7 @@ source("plot_R.r")
 plot_bayescan("SNP_fst.txt")
 ```
 
-![Baye1](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/Baye1.png)
+![Baye1](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/Baye1.png)
 
 ```javascript
 $outliers
@@ -429,7 +429,7 @@ $nb_outliers
 bs <- plot_bayescan("SNP_fst.txt", FDR = 0.1)
 ```
 
-![Baye2](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/tree/master/Output/Outlier_Detection/Baye2.png)
+![Baye2](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/Outlier_Detection/Baye2.png)
 
 ```javascript
 bs$outliers
