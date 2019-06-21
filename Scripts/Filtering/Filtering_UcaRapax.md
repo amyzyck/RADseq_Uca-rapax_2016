@@ -473,5 +473,9 @@ After filtering, kept 10597 out of a possible 38003 Sites
 Run Time = 11.00 seconds
 ```
 
+The final VCF file `SNP.TRSdp5g5mafMIap9g9dMMHWEmaf0252A.recode.vcf` has 10,597 loci.
+
 ****
-**I repeated the filtering, but omitted the `rad_haplotyper` steps, to generate a VCF file of SNPs: `SNP.TRSdp5g5mafMIap9g9dMMsnpDHWEmaf0252Amaf05.recode.vcf`.**
+**I repeated the filtering, but omitted the `rad_haplotyper` steps, to generate a VCF file of SNPs: `SNP.TRSdp5g5mafMIap9g9dMMsnpDHWEmaf0252Amaf05.recode.vcf`, which has 8,235 loci.**
+
+Both `SNP.TRSdp5g5mafMIap9g9dMMHWEmaf0252A.recode.vcf` and `SNP.TRSdp5g5mafMIap9g9dMMsnpDHWEmaf0252Amaf05.recode.vcf` were used in the outlier detection programs. 
