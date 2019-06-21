@@ -187,7 +187,7 @@ dDocent_Contig_2565     10
 dDocent_Contig_2813     77
 ```
 
-### Outflank
+### OutFLANK
 Work with SNPs with MAF > 0.05
 
 In terminal
@@ -529,9 +529,9 @@ vcftools --vcf SNP.TRSdp5g5mafMIap9g9dMMHWEmaf0252Amaf05.recode.vcf --recode --r
 
 Results for the SNP VCF file `SNP.TRSdp5g5mafMIap9g9dMMsnpDHWEmaf0252Amaf05.recode.vcf`:
 
-*118 outliers were detected from PCAdapt and Outflank (117 and 1, respectively).
 *8,117 Neutral loci located in `neutralsnploci.recode.vcf`.
-*118 outlier loci are located in `outliersnps.recode.vcf`.
+
+*118 outliers were detected from PCAdapt and OutFLANK (117 and 1, respectively), located in `outliersnps.recode.vcf`.
 
 ****
 #### Filtering one random SNP per contig
