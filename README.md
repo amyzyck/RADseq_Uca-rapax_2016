@@ -1,4 +1,30 @@
 # Impacts of sewage effluent on genomic diversity and connectivity of marine intertidal communities
+
+## Repository Content
+
+### Data Folder
+- **FC_meta_per_seq(1).csv**: .csv file containing morphological charactersterics, population location (coordinates), and library prep information for each sampled individual. 
+
+### Output Folder 
+Figures and .html files created during read mapping, assembly, filtering, and outlier detection.  
+
+### Scripts Folder 
+- **Assembly**
+  -**dDocent_UcaRapax.md**: Markdown file containing code for trimming reads, _de novo_ assembly, read mapping, and SNP calling using the dDocent pipeline. 
+  -**RawReads_Counts**: list of counts for raw forward and reverse reads. 
+- **Filtering**
+  -**Filtering_UcaRapax.md**: Markdown file containing code for filtering VCF file using VCFtools. 
+  -**dup_sample_filter.sh**: custom script used to remove sites in VCF files that do not have congruent genotypes across duplicate individuals. 
+- **OutlierDetection
+  -**OutlierDetection_UcaRapax.md**: Markdown file containing code for detecting outlier SNPs using PCAdapt, OutFLANK, BayeScan, and Bayenv2. 
+- **Analysis**
+  - **AllDataSNP.Rmd**: R Markdown file containing code for making files for other programs and then running various analyses on the All SNP dataset.
+  - **NeutralSNP.Rmd**: R Markdown file containing code for making files for other programs and then running various analyses on the Neutral SNP dataset.
+  - **Outliersnps.Rmd**: R Markdown file containing code for making files for other programs and then running various analyses on the Outlier SNP dataset.
+
+****
+## Project Details
+
 #### _Background_
 Coastal urban areas, home to over 50% of the population in the USA and over 60% of the population of the world, are a major source of marine pollution in coastal environments. This pollution enters the marine environment via either sewage effluent (wastewater) from wastewater treatment facilities, or runoff (stormwater) from rivers and municipal drainage systems. Stormwater and wastewater actively transport a variety of chemicals and substances that are known to be harmful to marine organisms. However, few studies have focused on the biphasic life cycle of marine organisms, that consists of a benthic, low migrating adult stage with low dispersal potential and a pelagic larval stage that spends highly variable amounts of time in the water column. Species with this life cycle are dependent on the early life stages for long-distance dispersal to increase gene flow across populations. One population connectivity study found that stormwater and wastewater are effective barriers to larval dispersal and significantly reduce gene flow between populations in a sea star species in coastal California (Puritz & Toonen 2011).
 
