@@ -10,13 +10,13 @@ Figures and .html files created during read mapping, assembly, filtering, and ou
 
 ### Scripts Folder 
 - **Assembly**
-  -**dDocent_UcaRapax.md**: Markdown file containing code for trimming reads, _de novo_ assembly, read mapping, and SNP calling using the dDocent pipeline. 
-  -**RawReads_Counts**: list of counts for raw forward and reverse reads. 
+  - **dDocent_UcaRapax.md**: Markdown file containing code for trimming reads, _de novo_ assembly, read mapping, and SNP calling using the dDocent pipeline. 
+  - **RawReads_Counts**: list of counts for raw forward and reverse reads. 
 - **Filtering**
-  -**Filtering_UcaRapax.md**: Markdown file containing code for filtering VCF file using VCFtools. 
-  -**dup_sample_filter.sh**: custom script used to remove sites in VCF files that do not have congruent genotypes across duplicate individuals. 
-- **OutlierDetection
-  -**OutlierDetection_UcaRapax.md**: Markdown file containing code for detecting outlier SNPs using PCAdapt, OutFLANK, BayeScan, and Bayenv2. 
+  - **Filtering_UcaRapax.md**: Markdown file containing code for filtering VCF file using VCFtools. 
+  - **dup_sample_filter.sh**: custom script used to remove sites in VCF files that do not have congruent genotypes across duplicate individuals. 
+- **OutlierDetection**
+  - **OutlierDetection_UcaRapax.md**: Markdown file containing code for detecting outlier SNPs using PCAdapt, OutFLANK, BayeScan, and Bayenv2. 
 - **Analysis**
   - **AllDataSNP.Rmd**: R Markdown file containing code for making files for other programs and then running various analyses on the All SNP dataset.
   - **NeutralSNP.Rmd**: R Markdown file containing code for making files for other programs and then running various analyses on the Neutral SNP dataset.
