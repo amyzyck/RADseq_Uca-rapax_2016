@@ -17,7 +17,7 @@ for fq in *.fq.gz
 > done
 ```
 
-#### [Output](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Scripts/Assembly/RawReads_Counts)
+#### [Output](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Scripts/Assembly/RawReads_Counts)
 ****
 ## dDocent will be used for Quality Filtering, _De Novo_ Assembly, Read Mapping, and SNP Calling
 
@@ -49,19 +49,19 @@ This generates an .html file of the MultiQC report. To view, I copied the file f
 ### Multiqc report summary of raw reads
 
 #### Sequence Quality
-![SeqQual](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_MeanQualityScores.png)
+![SeqQual](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_MeanQualityScores.png)
 
 This graph shows the mean quality at each position across the read. The quality looks pretty good. Quality is lower at the front and end of the sequence, but still within the green.
 
 #### Per Sequence Quality Scores
 
-![PerSeq](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_PerSequenceQualityScores.png)
+![PerSeq](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_PerSequenceQualityScores.png)
 
 This graph looks at the average quality scores per sequence. Again looks pretty good. Any low quality scores will be trimmed.
 
 #### Per Sequence GC Content
 
-![GC](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_GCcontent.png)
+![GC](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/raw_reads/raw_GCcontent.png)
 
 If all individuals are from the same species, then this graph will show that the sequences are roughly normally distributed. It is possible that there are individuals from another species mixed in. These individuals (if any) will be identified using Principal Components Analysis (PCA).
 
@@ -169,17 +169,17 @@ This generates an .html file of the MultiQC report. To view, I copied the file f
 
 #### Sequence Quality
 
-![cleanSeqQual](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_MeanQualityScores.png)
+![cleanSeqQual](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_MeanQualityScores.png)
 
 #### Per Sequence Quality scores
 
-![cleanPerSeq](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_PerSequenceQualityScores.png)
+![cleanPerSeq](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_PerSequenceQualityScores.png)
 
 First two are slightly better, but not much improvement was needed to begin with.
 
 #### Per Sequence GC content
 
-![cleanGC](https://github.com/amaeliazyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_GCcontent.png)
+![cleanGC](https://github.com/amyzyck/RADseq_Uca-rapax_2016/blob/master/Output/cleaned_reads/cleaned_GCcontent.png)
 
 GC content is still bad, but hopefully I can identify any individuals from other species with PCA.
 *****
